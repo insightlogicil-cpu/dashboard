@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1e293b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>לוח בקרה</title><!-- v2 cloud -->
+<style>
+:root{
+  --bg:#f1f5f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --accent:#2563eb; --danger:#dc2626; --ok:#16a34a; --warn:#d97706;
+  --shadow:0 1px 3px rgba(15,23,42,.08),0 4px 14px rgba(15,23,42,.06);
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,"Segoe UI",Roboto,"Heebo",Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100dvh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:16px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+
+/* ---------- sidebar (desktop) ---------- */
+#sidebar{width:250px;background:#0f172a;color:#e2e8f0;display:flex;flex-direction:column;padding:18px 12px;gap:4px;flex-shrink:0;overflow-y:auto}
+#sidebar .logo{font-size:20px;font-weight:800;color:#fff;padding:6px 10px 16px;display:flex;align-items:center;gap:8px}
+#sidebar .logo span{color:#60a5fa}
+.navbtn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#cbd5e1;font-size:15px;text-align:right;width:100%}
+.navbtn:hover{background:#1e293b}
+.navbtn.active{background:#2563eb;color:#fff}
+.navbtn .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.navsec{font-size:11px;letter-spacing:.08em;color:#64748b;padding:14px 12px 4px;text-transform:uppercase}
+.navcount{margin-inline-start:auto;background:#1e293b;border-radius:99px;font-size:11px;padding:2px 8px;color:#94a3b8}
+.navbtn.active .navcount{background:rgba(255,255,255,.2);color:#fff}
+
+/* ---------- main ---------- */
+#main{flex:1;overflow-y:auto;padding:22px clamp(14px,4vw,40px) 90px}
+.pagehead{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.pagehead h1{font-size:24px;font-weight:800;display:flex;align-items:center;gap:10px}
+.pagehead .cdot{width:16px;height:16px;border-radius:6px}
+.pagehead .sub{color:var(--muted);font-size:14px;width:100%}
+.spacer{flex:1}
+
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--danger)}
+.btn.ok{background:var(--ok)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.iconbtn{width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted)}
+.iconbtn:hover{background:var(--bg);color:var(--ink)}
+.iconbtn.on{color:var(--warn)}
+
+/* ---------- dashboard ---------- */
+.dash-cat{margin-bottom:6px}
+.dash-cat h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.subrow{display:flex;align-items:center;gap:12px;padding:11px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:8px}
+.subrow:hover{background:var(--bg)}
+.subrow:first-of-type{border-top:none}
+.subrow .sdot{width:11px;height:11px;border-radius:4px;flex-shrink:0}
+.subrow .sname{font-weight:600;font-size:14.5px}
+.subrow .scount{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.pbar{flex:1;height:7px;background:var(--line);border-radius:99px;overflow:hidden;min-width:60px}
+.pbar>div{height:100%;border-radius:99px;transition:width .4s}
+.ppct{font-size:12px;font-weight:700;width:38px;text-align:left;color:var(--muted)}
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;text-align:center}
+.stat b{font-size:26px;display:block}
+.stat span{font-size:12.5px;color:var(--muted)}
+
+/* ---------- task list ---------- */
+.task{display:flex;align-items:flex-start;gap:10px;padding:12px 10px;border-top:1px solid var(--line);background:var(--card);position:relative}
+.task:first-child{border-top:none}
+.task.pinned{background:#fffbeb}
+.task.dragover{outline:2px dashed var(--accent);outline-offset:-2px}
+.task .chk{width:22px;height:22px;border:2px solid var(--muted);border-radius:50%;flex-shrink:0;margin-top:2px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#fff;transition:.15s}
+.task .chk:hover{border-color:var(--ok)}
+.task.doneAnim .chk{background:var(--ok);border-color:var(--ok)}
+.task.doneAnim .ttl{text-decoration:line-through;color:var(--muted)}
+.task .body{flex:1;min-width:0}
+.task .ttl{font-size:15px;font-weight:600;word-break:break-word;white-space:pre-wrap}
+.task .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--muted);align-items:center}
+.chip{background:var(--bg);border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:600}
+.chip.due{background:#fef3c7;color:#92400e}
+.chip.late{background:#fee2e2;color:#991b1b}
+.task .acts{display:flex;gap:2px;flex-shrink:0;align-items:center}
+.task .handle{cursor:grab;color:#cbd5e1;font-size:18px;padding:2px 4px;margin-top:2px}
+.empty{text-align:center;color:var(--muted);padding:44px 10px;font-size:14.5px}
+.empty .big{font-size:40px;margin-bottom:8px}
+
+/* quick add */
+.qadd{display:flex;gap:8px;margin-bottom:14px}
+.qadd input{flex:1}
+.micbtn{width:46px;flex-shrink:0;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:19px}
+.micbtn.rec{background:var(--danger);color:#fff;border-color:var(--danger);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.6}}
+
+/* ---------- forms ---------- */
+.frm{display:flex;flex-direction:column;gap:13px;max-width:560px}
+.frm label{font-size:13px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.colorpick{display:flex;gap:8px;flex-wrap:wrap}
+.colorpick .c{width:30px;height:30px;border-radius:9px;border:3px solid transparent}
+.colorpick .c.sel{border-color:var(--ink)}
+
+/* ---------- modal ---------- */
+#modalwrap{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#modalwrap.show{display:flex}
+#modal{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:440px;max-height:88dvh;overflow-y:auto}
+#modal h3{font-size:17px;margin-bottom:14px}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;bottom:84px;right:50%;transform:translateX(50%);background:#0f172a;color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;display:none;z-index:70;align-items:center;gap:12px;box-shadow:var(--shadow);max-width:92vw}
+#toast.show{display:flex}
+#toast button{color:#60a5fa;font-weight:700}
+
+/* ---------- mobile ---------- */
+#mobilebar{display:none}
+#hamb{display:none}
+@media(max-width:820px){
+  #sidebar{position:fixed;inset-block:0;right:0;z-index:50;transform:translateX(100%);transition:transform .25s;width:270px;padding-top:max(18px,env(safe-area-inset-top))}
+  #sidebar.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.4)}
+  #main{padding:14px 14px 96px}
+  #mobilebar{display:flex;position:sticky;top:0;z-index:40;background:var(--bg);padding:6px 0 10px;align-items:center;gap:10px}
+  #hamb{display:inline-flex;font-size:22px;width:42px;height:42px;border-radius:10px;background:var(--card);box-shadow:var(--shadow);align-items:center;justify-content:center}
+  #mtitle{font-weight:800;font-size:17px}
+  .row2{grid-template-columns:1fr}
+  #scrim{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:45;display:none}
+  #scrim.show{display:block}
+}
+.share-ro{max-width:640px;margin:30px auto}
+.share-ro li{padding:9px 4px;border-top:1px solid var(--line);list-style:none;font-size:15px}
+
+/* ---------- login ---------- */
+#login{position:fixed;inset:0;background:var(--bg);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+#login.show{display:flex}
+.loginbox{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:38px 30px;max-width:380px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.loginbox h2{font-size:22px}
+.loginbox p{color:var(--muted);font-size:14px}
+.linklike{color:var(--muted);font-size:13px;text-decoration:underline}
+.syncline{display:flex;align-items:center;gap:8px;padding:10px 12px;margin-top:auto;font-size:12.5px;color:#94a3b8;border-top:1px solid #1e293b}
+.syncline .sdot2{width:8px;height:8px;border-radius:50%;background:#64748b;flex-shrink:0}
+.syncline.on .sdot2{background:#22c55e}
+.syncline.err .sdot2{background:#ef4444}
+</style>
+</head>
+<body>
+
+<nav id="sidebar"></nav>
+<div id="scrim" onclick="closeSidebar()"></div>
+
+<main id="main">
+  <div id="mobilebar"><button id="hamb" onclick="openSidebar()">☰</button><span id="mtitle">לוח בקרה</span></div>
+  <div id="view"></div>
+</main>
+
+<div id="modalwrap" onclick="if(event.target===this)closeModal()"><div id="modal"></div></div>
+<div id="toast"></div>
+
+<div id="login">
+  <div class="loginbox">
+    <div style="font-size:44px">📋</div>
+    <h2>לוח בקרה</h2>
+    <p>התחבר עם חשבון גוגל כדי לסנכרן את המשימות בין המחשב והנייד</p>
+    <button class="btn" style="font-size:16px;padding:12px 26px" onclick="doLogin()">🔑 התחברות עם Google</button>
+    <button class="linklike" onclick="localOnly=true;hideLogin();boot()">המשך בעבודה מקומית ללא סנכרון</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+/* ================= data layer (swap this module for cloud later) ================= */
+const DB_KEY="hilik_dashboard_v1";
+const PALETTE=["#2563eb","#7c3aed","#db2777","#dc2626","#ea580c","#d97706","#16a34a","#0d9488","#0891b2","#475569","#84cc16","#a855f7"];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+function defaultState(){
+  const subs=n=>n.map((s,i)=>({id:uid()+i,name:s,color:PALETTE[(i+4)%PALETTE.length]}));
+  return {
+    categories:[
+      {id:uid()+"a",name:"Vality",color:"#2563eb",subs:subs(["בנקים","רואה חשבון","שיווק","עורכי דין","שוטף"])},
+      {id:uid()+"b",name:"Insight",color:"#7c3aed",subs:subs(["בנקים","רואה חשבון","שיווק","עורכי דין","שוטף"])},
+      {id:uid()+"c",name:"פיתוח",color:"#0d9488",subs:subs(["שוטף"])},
+      {id:uid()+"d",name:"פרויקטים",color:"#ea580c",subs:subs(["שוטף"])},
+      {id:uid()+"e",name:"אישי",color:"#16a34a",subs:subs(["שוטף"])}
+    ],
+    tasks:[], // {id,catId,subId,title,due,reminderAt,reminded,pinned,done,status:'open'|'archive'|'trash',created,completedAt}
+    settings:{doneTarget:"archive"}
+  };
+}
+/* ====== Firebase config — הדבק כאן את הפרטים מ-Firebase Console (שלב 2 ב-README) ====== */
+const firebaseConfig={
+  apiKey:"AIzaSyDu4uPBkK4Glz0JWyr9crhj8d5HRRrZFa0",
+  authDomain:"hilik-dashboard.firebaseapp.com",
+  projectId:"hilik-dashboard",
+  storageBucket:"hilik-dashboard.firebasestorage.app",
+  messagingSenderId:"861235517411",
+  appId:"1:861235517411:web:6c55fd189e48da187ff2d6"
+};
+/* ======================================================================================= */
+const CLOUD=typeof firebase!=="undefined"&&!String(firebaseConfig.apiKey).includes("PASTE");
+let auth=null,db=null,docRef=null,fbUser=null,localOnly=false,lastPushed=null,saveTimer=null;
+
+let S;
+function load(){try{S=JSON.parse(localStorage.getItem(DB_KEY))||defaultState();}catch(e){S=defaultState();}}
+function save(){
+  localStorage.setItem(DB_KEY,JSON.stringify(S));
+  if(docRef){clearTimeout(saveTimer);saveTimer=setTimeout(pushCloud,700);}
+}
+function pushCloud(){
+  if(!docRef)return;
+  const js=JSON.stringify(S);
+  if(js===lastPushed)return;
+  lastPushed=js;
+  setSync("שומר…","");
+  docRef.set({state:js,updated:Date.now()}).then(()=>setSync("מסונכרן ✓","on")).catch(()=>setSync("שגיאת סנכרון","err"));
+}
+function startSnapshot(){
+  docRef.onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites)return;
+    if(!snap.exists){lastPushed=null;pushCloud();return;} // מיגרציה: העלאת הנתונים המקומיים בפעם הראשונה
+    const js=snap.data().state;
+    if(js===lastPushed)return;
+    try{S=JSON.parse(js);lastPushed=js;localStorage.setItem(DB_KEY,js);render();setSync("מסונכרן ✓","on");}catch(e){}
+  },()=>setSync("שגיאת סנכרון","err"));
+}
+let syncState={txt:"מתחבר…",cls:""};
+function setSync(txt,cls){
+  syncState={txt,cls:cls||""};
+  const el=document.getElementById("syncline");
+  if(!el)return;
+  el.className="syncline "+(cls||"");
+  el.querySelector("span:last-child").textContent=txt;
+}
+function initCloud(){
+  firebase.initializeApp(firebaseConfig);
+  auth=firebase.auth();db=firebase.firestore();
+  try{db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch(e){}
+  auth.onAuthStateChanged(u=>{
+    if(u){fbUser=u;hideLogin();docRef=db.collection("boards").doc(u.uid);startSnapshot();boot();}
+    else if(!localOnly){showLogin();}
+  });
+}
+function doLogin(){
+  const p=new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(p).catch(()=>auth.signInWithRedirect(p));
+}
+function doLogout(){auth&&auth.signOut().then(()=>location.reload());}
+function showLogin(){document.getElementById("login").classList.add("show");}
+function hideLogin(){document.getElementById("login").classList.remove("show");}
+
+/* ================= helpers ================= */
+const cat=id=>S.categories.find(c=>c.id===id);
+const sub=(c,id)=>c&&c.subs.find(s=>s.id===id);
+const esc=s=>(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const openTasks=(cid,sid)=>S.tasks.filter(t=>t.status==="open"&&t.catId===cid&&(!sid||t.subId===sid));
+const doneTasks=(cid,sid)=>S.tasks.filter(t=>t.done&&t.catId===cid&&(!sid||t.subId===sid));
+function sortForView(list){return list.slice().sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||a.order-b.order);}
+function fmtDT(ts){if(!ts)return"";const d=new Date(ts);return d.toLocaleDateString("he-IL",{day:"numeric",month:"numeric"})+" "+d.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});}
+
+let view={name:"dashboard"};
+function go(v){view=v;closeSidebar();render();window.scrollTo(0,0);}
+
+/* ================= sidebar ================= */
+function renderSidebar(){
+  const n=(v,ico,label,count)=>`<button class="navbtn ${view.name===v?'active':''}" onclick="go({name:'${v}'})">${ico} ${label}${count!==undefined?`<span class="navcount">${count}</span>`:""}</button>`;
+  const openAll=S.tasks.filter(t=>t.status==="open").length;
+  const arch=S.tasks.filter(t=>t.status==="archive").length;
+  const trash=S.tasks.filter(t=>t.status==="trash").length;
+  let h=`<div class="logo">📋 לוח <span>בקרה</span></div>`;
+  h+=n("dashboard","📊","Dashboard כללי",openAll);
+  h+=n("add","➕","משימה חדשה");
+  h+=`<div class="navsec">קטגוריות</div>`;
+  for(const c of S.categories){
+    const cnt=openTasks(c.id).length;
+    h+=`<button class="navbtn ${view.name==='cat'&&view.catId===c.id?'active':''}" onclick="go({name:'cat',catId:'${c.id}'})"><span class="dot" style="background:${c.color}"></span> ${esc(c.name)}<span class="navcount">${cnt}</span></button>`;
+  }
+  h+=`<button class="navbtn" onclick="editCategory()">＋ קטגוריה חדשה</button>`;
+  h+=`<div class="navsec">ניהול</div>`;
+  h+=n("archive","🗄️","ארכיון",arch)+n("trash","🗑️","פח אשפה",trash)+n("settings","⚙️","הגדרות");
+  if(fbUser)h+=`<div class="syncline ${syncState.cls}" id="syncline"><span class="sdot2"></span><span>${esc(syncState.txt)}</span></div>`;
+  else if(CLOUD===false)h+=`<div class="syncline" id="syncline"><span class="sdot2"></span><span>מצב מקומי — ללא סנכרון</span></div>`;
+  document.getElementById("sidebar").innerHTML=h;
+}
+function openSidebar(){document.getElementById("sidebar").classList.add("open");document.getElementById("scrim").classList.add("show");}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("scrim").classList.remove("show");}
+
+/* ================= render dispatch ================= */
+function render(){
+  renderSidebar();save();
+  const V=document.getElementById("view");
+  const titles={dashboard:"Dashboard כללי",add:"משימה חדשה",archive:"ארכיון",trash:"פח אשפה",settings:"הגדרות"};
+  document.getElementById("mtitle").textContent=view.name==="cat"?(cat(view.catId)?.name||""):view.name==="sub"?(sub(cat(view.catId),view.subId)?.name||""):(titles[view.name]||"לוח בקרה");
+  if(view.name==="dashboard")V.innerHTML=vDashboard();
+  else if(view.name==="add")V.innerHTML=vAdd();
+  else if(view.name==="cat")V.innerHTML=vCat(view.catId);
+  else if(view.name==="sub")V.innerHTML=vSub(view.catId,view.subId);
+  else if(view.name==="archive")V.innerHTML=vStore("archive");
+  else if(view.name==="trash")V.innerHTML=vStore("trash");
+  else if(view.name==="settings")V.innerHTML=vSettings();
+  else if(view.name==="shared")V.innerHTML=vShared();
+  if(view.name==="add")fillSubSelect();
+}
+
+/* ================= dashboard ================= */
+function vDashboard(){
+  const open=S.tasks.filter(t=>t.status==="open");
+  const done=S.tasks.filter(t=>t.done);
+  const today=new Date();today.setHours(23,59,59,999);
+  const dueToday=open.filter(t=>t.reminderAt&&t.reminderAt<=today.getTime()).length;
+  const pct=open.length+done.length?Math.round(done.length/(open.length+done.length)*100):0;
+  let h=`<div class="pagehead"><h1>📊 Dashboard כללי</h1><div class="spacer"></div><button class="btn" onclick="go({name:'add'})">➕ משימה חדשה</button></div>`;
+  h+=`<div class="statrow">
+    <div class="stat"><b>${open.length}</b><span>משימות פתוחות</span></div>
+    <div class="stat"><b style="color:var(--warn)">${dueToday}</b><span>להיום / באיחור</span></div>
+    <div class="stat"><b style="color:var(--ok)">${done.length}</b><span>בוצעו</span></div>
+    <div class="stat"><b>${pct}%</b><span>התקדמות כוללת</span></div></div>`;
+  h+=`<div class="grid">`;
+  for(const c of S.categories){
+    h+=`<div class="card dash-cat"><h2 style="cursor:pointer" onclick="go({name:'cat',catId:'${c.id}'})"><span class="cdot" style="background:${c.color};width:13px;height:13px;border-radius:5px"></span>${esc(c.name)}</h2>`;
+    if(!c.subs.length)h+=`<div class="empty" style="padding:14px">אין תתי-נושאים</div>`;
+    for(const s of c.subs){
+      const o=openTasks(c.id,s.id).length,d=doneTasks(c.id,s.id).length;
+      const p=o+d?Math.round(d/(o+d)*100):0;
+      h+=`<div class="subrow" onclick="go({name:'sub',catId:'${c.id}',subId:'${s.id}'})">
+        <span class="sdot" style="background:${s.color}"></span>
+        <span class="sname">${esc(s.name)}</span>
+        <div class="pbar"><div style="width:${p}%;background:${s.color}"></div></div>
+        <span class="ppct">${p}%</span>
+        <span class="scount">${o} פתוחות</span></div>`;
+    }
+    h+=`</div>`;
+  }
+  return h+`</div>`;
+}
+
+/* ================= category view ================= */
+function vCat(cid){
+  const c=cat(cid);if(!c)return vDashboard();
+  let h=`<div class="pagehead"><h1><span class="cdot" style="background:${c.color}"></span>${esc(c.name)}</h1>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="editCategory('${c.id}')">✏️ עריכה</button>
+    <button class="btn sm" onclick="editSub('${c.id}')">➕ תת-נושא</button></div>`;
+  h+=`<div class="grid">`;
+  for(const s of c.subs){
+    const o=openTasks(c.id,s.id).length,d=doneTasks(c.id,s.id).length;
+    const p=o+d?Math.round(d/(o+d)*100):0;
+    h+=`<div class="card" style="cursor:pointer;border-top:4px solid ${s.color}" onclick="go({name:'sub',catId:'${c.id}',subId:'${s.id}'})">
+      <div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">${esc(s.name)}</b><div class="spacer"></div><span class="scount">${o} פתוחות · ${d} בוצעו</span></div>
+      <div class="pbar" style="margin-top:12px"><div style="width:${p}%;background:${s.color}"></div></div></div>`;
+  }
+  if(!c.subs.length)h+=`<div class="empty card"><div class="big">🗂️</div>אין עדיין תתי-נושאים — הוסף אחד</div>`;
+  return h+`</div>`;
+}
+
+/* ================= sub-topic view (active task table) ================= */
+function vSub(cid,sid){
+  const c=cat(cid),s=sub(c,sid);if(!s)return vDashboard();
+  const list=sortForView(openTasks(cid,sid));
+  let h=`<div class="pagehead">
+    <h1><span class="cdot" style="background:${s.color}"></span>${esc(s.name)}</h1>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="shareWhatsApp('${cid}','${sid}')">💬 WhatsApp</button>
+    <button class="btn ghost sm" onclick="shareMail('${cid}','${sid}')">✉️ מייל</button>
+    <button class="btn ghost sm" onclick="shareLink('${cid}','${sid}')">🔗 קישור</button>
+    <button class="btn ghost sm" onclick="editSub('${cid}','${sid}')">✏️</button>
+    <div class="sub"><a href="#" onclick="event.preventDefault();go({name:'cat',catId:'${cid}'})" style="color:var(--muted)">‹ חזרה ל-${esc(c.name)}</a></div>
+  </div>`;
+  h+=`<div class="qadd"><input id="qin" placeholder="משימה חדשה ב${esc(s.name)}… (Enter להוספה)" onkeydown="if(event.key==='Enter')quickAdd('${cid}','${sid}')">
+      <button class="micbtn" id="qmic" onclick="startMic(document.getElementById('qin'),this)" title="הקלטת משימה">🎤</button>
+      <button class="btn" onclick="quickAdd('${cid}','${sid}')">הוסף</button></div>`;
+  if(!list.length)return h+`<div class="card empty"><div class="big">✨</div>אין משימות פתוחות בתת-נושא זה</div>`;
+  h+=`<div class="card" style="padding:4px 8px">`;
+  list.forEach((t,i)=>{h+=taskRow(t,i,list.length);});
+  return h+`</div>`;
+}
+function taskRow(t,i,len){
+  const now=Date.now();
+  let chips="";
+  if(t.pinned)chips+=`<span class="chip">📌 נעוץ</span>`;
+  if(t.reminderAt)chips+=`<span class="chip ${t.reminderAt<now?'late':'due'}">⏰ ${fmtDT(t.reminderAt)}</span>`;
+  return `<div class="task ${t.pinned?'pinned':''}" draggable="true" data-id="${t.id}"
+      ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="this.classList.remove('dragover')" ondrop="dropTask(event)">
+    <span class="handle" title="גרור לסידור">⠿</span>
+    <button class="chk" onclick="completeTask('${t.id}')" title="סמן כבוצע">✓</button>
+    <div class="body"><div class="ttl">${esc(t.title)}</div>
+      <div class="meta">${chips}</div></div>
+    <div class="acts">
+      <button class="iconbtn" ${i===0?'style="opacity:.25" disabled':''} onclick="moveTask('${t.id}',-1)" title="הזז למעלה">▲</button>
+      <button class="iconbtn" ${i===len-1?'style="opacity:.25" disabled':''} onclick="moveTask('${t.id}',1)" title="הזז למטה">▼</button>
+      <button class="iconbtn ${t.pinned?'on':''}" onclick="togglePin('${t.id}')" title="נעץ לראש הרשימה">📌</button>
+      <button class="iconbtn" onclick="editTask('${t.id}')" title="עריכה">✏️</button>
+      <button class="iconbtn" onclick="toTrash('${t.id}')" title="לפח">🗑️</button>
+    </div></div>`;
+}
+
+/* ================= task actions ================= */
+function nextOrder(cid,sid){return Math.max(0,...openTasks(cid,sid).map(t=>t.order+1));}
+function quickAdd(cid,sid){
+  const el=document.getElementById("qin");const v=el.value.trim();if(!v)return;
+  S.tasks.push({id:uid(),catId:cid,subId:sid,title:v,pinned:false,done:false,status:"open",created:Date.now(),order:nextOrder(cid,sid)});
+  el.value="";render();document.getElementById("qin")?.focus();toast("המשימה נוספה ✓");
+}
+function completeTask(id){
+  const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  const el=document.querySelector(`.task[data-id="${id}"]`);el&&el.classList.add("doneAnim");
+  setTimeout(()=>{
+    t.done=true;t.completedAt=Date.now();t.status=S.settings.doneTarget;
+    render();
+    toast(`הועברה ל${t.status==="archive"?"ארכיון":"פח"} ✓`,()=>{t.done=false;t.status="open";delete t.completedAt;render();});
+  },450);
+}
+function togglePin(id){const t=S.tasks.find(x=>x.id===id);t.pinned=!t.pinned;render();}
+function toTrash(id){const t=S.tasks.find(x=>x.id===id);t.status="trash";render();toast("הועברה לפח",()=>{t.status="open";render();});}
+function moveTask(id,dir){
+  const t=S.tasks.find(x=>x.id===id);
+  const list=sortForView(openTasks(t.catId,t.subId));
+  const i=list.findIndex(x=>x.id===id);const j=i+dir;
+  if(j<0||j>=list.length)return;
+  const other=list[j];const tmp=t.order;t.order=other.order;other.order=tmp;
+  if(t.pinned!==other.pinned){t.pinned=other.pinned;}
+  render();
+}
+/* drag & drop */
+let dragId=null;
+function dragStart(e){dragId=e.currentTarget.dataset.id;e.dataTransfer.effectAllowed="move";}
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add("dragover");}
+function dropTask(e){
+  e.preventDefault();e.currentTarget.classList.remove("dragover");
+  const targetId=e.currentTarget.dataset.id;if(!dragId||dragId===targetId)return;
+  const t=S.tasks.find(x=>x.id===dragId),o=S.tasks.find(x=>x.id===targetId);
+  const list=sortForView(openTasks(t.catId,t.subId)).filter(x=>x.id!==t.id);
+  const idx=list.findIndex(x=>x.id===targetId);
+  list.splice(idx,0,t);
+  t.pinned=o.pinned;
+  list.forEach((x,i)=>x.order=i);
+  dragId=null;render();
+}
+
+/* ================= add-task page ================= */
+function vAdd(){
+  return `<div class="pagehead"><h1>➕ משימה חדשה</h1></div>
+  <div class="card"><div class="frm">
+    <div><label>תיאור המשימה</label>
+      <div style="display:flex;gap:8px"><textarea id="f_title" rows="2" placeholder="מה צריך לבצע?"></textarea>
+      <button class="micbtn" id="f_mic" onclick="startMic(document.getElementById('f_title'),this)" title="הקלטה קולית">🎤</button></div></div>
+    <div class="row2">
+      <div><label>קטגוריה</label><select id="f_cat" onchange="fillSubSelect()"></select></div>
+      <div><label>תת-נושא</label><select id="f_sub"></select></div></div>
+    <div class="row2">
+      <div><label>תזכורת — תאריך (לא חובה)</label><input type="date" id="f_date"></div>
+      <div><label>שעה</label><input type="time" id="f_time"></div></div>
+    <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="f_pin" style="width:18px;height:18px"><label for="f_pin" style="margin:0;font-size:14px;color:var(--ink)">📌 נעץ בראש הרשימה</label></div>
+    <div style="display:flex;gap:10px"><button class="btn" onclick="saveNewTask()">שמור משימה</button>
+    <button class="btn ghost" onclick="go({name:'dashboard'})">ביטול</button></div>
+  </div></div>`;
+}
+function fillSubSelect(){
+  const cs=document.getElementById("f_cat"),ss=document.getElementById("f_sub");if(!cs)return;
+  if(!cs.options.length)cs.innerHTML=S.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if(view.catId)cs.value=view.catId;
+  const c=cat(cs.value);
+  ss.innerHTML=c?c.subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(""):"";
+  if(view.subId&&sub(c,view.subId))ss.value=view.subId;
+}
+function reminderTS(){
+  const d=document.getElementById("f_date").value,t=document.getElementById("f_time").value;
+  if(!d)return null;
+  return new Date(d+"T"+(t||"09:00")).getTime();
+}
+function saveNewTask(){
+  const title=document.getElementById("f_title").value.trim();
+  if(!title){toast("כתוב תיאור למשימה");return;}
+  const cid=document.getElementById("f_cat").value,sid=document.getElementById("f_sub").value;
+  if(!sid){toast("בחר תת-נושא");return;}
+  const r=reminderTS();
+  S.tasks.push({id:uid(),catId:cid,subId:sid,title,reminderAt:r,reminded:false,pinned:document.getElementById("f_pin").checked,done:false,status:"open",created:Date.now(),order:nextOrder(cid,sid)});
+  if(r)askNotifPermission();
+  go({name:"sub",catId:cid,subId:sid});toast("המשימה נשמרה ✓");
+}
+
+/* ================= edit task modal ================= */
+function editTask(id){
+  const t=S.tasks.find(x=>x.id===id);
+  const d=t.reminderAt?new Date(t.reminderAt):null;
+  const dv=d?d.toISOString().slice(0,10):"",tv=d?d.toTimeString().slice(0,5):"";
+  openModal(`<h3>עריכת משימה</h3><div class="frm">
+    <textarea id="e_title" rows="2">${esc(t.title)}</textarea>
+    <div class="row2"><div><label>קטגוריה</label><select id="e_cat" onchange="eFillSub()">${S.categories.map(c=>`<option value="${c.id}" ${c.id===t.catId?'selected':''}>${esc(c.name)}</option>`).join("")}</select></div>
+    <div><label>תת-נושא</label><select id="e_sub"></select></div></div>
+    <div class="row2"><div><label>תזכורת</label><input type="date" id="e_date" value="${dv}"></div>
+    <div><label>שעה</label><input type="time" id="e_time" value="${tv}"></div></div>
+    <div style="display:flex;gap:10px"><button class="btn" onclick="saveEditTask('${id}')">שמור</button>
+    <button class="btn ghost" onclick="closeModal()">ביטול</button></div></div>`);
+  window.eFillSub=()=>{const c=cat(document.getElementById("e_cat").value);
+    document.getElementById("e_sub").innerHTML=c.subs.map(s=>`<option value="${s.id}" ${s.id===t.subId?'selected':''}>${esc(s.name)}</option>`).join("");};
+  eFillSub();
+}
+function saveEditTask(id){
+  const t=S.tasks.find(x=>x.id===id);
+  t.title=document.getElementById("e_title").value.trim()||t.title;
+  const ncid=document.getElementById("e_cat").value,nsid=document.getElementById("e_sub").value;
+  if(nsid&&(ncid!==t.catId||nsid!==t.subId)){t.catId=ncid;t.subId=nsid;t.order=nextOrder(ncid,nsid);}
+  const dv=document.getElementById("e_date").value,tv=document.getElementById("e_time").value;
+  t.reminderAt=dv?new Date(dv+"T"+(tv||"09:00")).getTime():null;t.reminded=false;
+  if(t.reminderAt)askNotifPermission();
+  closeModal();render();
+}
+
+/* ================= archive / trash ================= */
+function vStore(kind){
+  const list=S.tasks.filter(t=>t.status===kind).sort((a,b)=>(b.completedAt||b.created)-(a.completedAt||a.created));
+  const isTrash=kind==="trash";
+  let h=`<div class="pagehead"><h1>${isTrash?"🗑️ פח אשפה":"🗄️ ארכיון"}</h1><div class="spacer"></div>`;
+  if(list.length)h+=`<button class="btn danger sm" onclick="emptyStore('${kind}')">${isTrash?"רוקן פח":"רוקן ארכיון"}</button>`;
+  h+=`</div>`;
+  if(!list.length)return h+`<div class="card empty"><div class="big">${isTrash?"🗑️":"🗄️"}</div>${isTrash?"הפח ריק":"הארכיון ריק"}</div>`;
+  h+=`<div class="card" style="padding:4px 8px">`;
+  for(const t of list){
+    const c=cat(t.catId),s=sub(c,t.subId);
+    h+=`<div class="task"><div class="body"><div class="ttl" style="color:var(--muted);${t.done?'text-decoration:line-through':''}">${esc(t.title)}</div>
+      <div class="meta"><span class="chip" style="background:${c?c.color:'#999'}22;color:${c?c.color:'#999'}">${esc(c?.name||"?")} · ${esc(s?.name||"?")}</span>
+      ${t.completedAt?`<span>בוצע: ${fmtDT(t.completedAt)}</span>`:""}</div></div>
+    <div class="acts">
+      <button class="iconbtn" onclick="restoreTask('${t.id}')" title="שחזר">↩️</button>
+      ${isTrash?`<button class="iconbtn" onclick="killTask('${t.id}')" title="מחק לצמיתות">❌</button>`
+               :`<button class="iconbtn" onclick="toTrash('${t.id}')" title="לפח">🗑️</button>`}
+    </div></div>`;
+  }
+  return h+`</div>`;
+}
+function restoreTask(id){const t=S.tasks.find(x=>x.id===id);t.status="open";t.done=false;delete t.completedAt;t.order=nextOrder(t.catId,t.subId);render();toast("שוחזרה ✓");}
+function killTask(id){S.tasks=S.tasks.filter(x=>x.id!==id);render();}
+function emptyStore(kind){
+  confirmModal(kind==="trash"?"למחוק לצמיתות את כל המשימות בפח?":"למחוק לצמיתות את כל הארכיון?",()=>{S.tasks=S.tasks.filter(t=>t.status!==kind);render();});
+}
+
+/* ================= category & sub modals ================= */
+function colorPicker(idPrefix,selected){
+  return `<div class="colorpick" id="${idPrefix}_cp">${PALETTE.map(c=>`<button class="c ${c===selected?'sel':''}" style="background:${c}" data-c="${c}" onclick="pickColor('${idPrefix}',this)"></button>`).join("")}</div>`;
+}
+window.pickColor=(p,el)=>{document.querySelectorAll(`#${p}_cp .c`).forEach(x=>x.classList.remove("sel"));el.classList.add("sel");};
+const chosenColor=p=>document.querySelector(`#${p}_cp .c.sel`)?.dataset.c||PALETTE[0];
+
+function editCategory(cid){
+  const c=cid?cat(cid):null;
+  openModal(`<h3>${c?"עריכת קטגוריה":"קטגוריה חדשה"}</h3><div class="frm">
+    <div><label>שם</label><input id="c_name" value="${c?esc(c.name):""}" placeholder="שם הקטגוריה"></div>
+    <div><label>צבע</label>${colorPicker("cc",c?c.color:PALETTE[0])}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="saveCategory(${c?`'${c.id}'`:"null"})">שמור</button>
+    ${c?`<button class="btn danger" onclick="delCategory('${c.id}')">מחק קטגוריה</button>`:""}
+    <button class="btn ghost" onclick="closeModal()">ביטול</button></div></div>`);
+}
+function saveCategory(cid){
+  const name=document.getElementById("c_name").value.trim();if(!name){toast("תן שם לקטגוריה");return;}
+  const color=chosenColor("cc");
+  if(cid){const c=cat(cid);c.name=name;c.color=color;}
+  else S.categories.push({id:uid(),name,color,subs:[{id:uid(),name:"שוטף",color}]});
+  closeModal();render();
+}
+function delCategory(cid){
+  const n=openTasks(cid).length;
+  confirmModal(`למחוק את הקטגוריה${n?` ואת ${n} המשימות הפתוחות בה`:""}? הפעולה סופית.`,()=>{
+    S.categories=S.categories.filter(c=>c.id!==cid);
+    S.tasks=S.tasks.filter(t=>t.catId!==cid);
+    closeModal();go({name:"dashboard"});
+  });
+}
+function editSub(cid,sid){
+  const c=cat(cid),s=sid?sub(c,sid):null;
+  openModal(`<h3>${s?"עריכת תת-נושא":"תת-נושא חדש ב"+esc(c.name)}</h3><div class="frm">
+    <div><label>שם</label><input id="s_name" value="${s?esc(s.name):""}" placeholder="שם תת-הנושא"></div>
+    <div><label>צבע</label>${colorPicker("sc",s?s.color:PALETTE[6])}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="saveSub('${cid}',${s?`'${s.id}'`:"null"})">שמור</button>
+    ${s?`<button class="btn danger" onclick="delSub('${cid}','${s.id}')">מחק</button>`:""}
+    <button class="btn ghost" onclick="closeModal()">ביטול</button></div></div>`);
+}
+function saveSub(cid,sid){
+  const name=document.getElementById("s_name").value.trim();if(!name){toast("תן שם לתת-הנושא");return;}
+  const c=cat(cid),color=chosenColor("sc");
+  if(sid){const s=sub(c,sid);s.name=name;s.color=color;}
+  else c.subs.push({id:uid(),name,color});
+  closeModal();render();
+}
+function delSub(cid,sid){
+  const n=openTasks(cid,sid).length;
+  confirmModal(`למחוק את תת-הנושא${n?` ואת ${n} המשימות הפתוחות בו`:""}?`,()=>{
+    const c=cat(cid);c.subs=c.subs.filter(s=>s.id!==sid);
+    S.tasks=S.tasks.filter(t=>!(t.catId===cid&&t.subId===sid));
+    closeModal();go({name:"cat",catId:cid});
+  });
+}
+
+/* ================= settings ================= */
+function vSettings(){
+  const acc=fbUser
+    ?`<p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">מחובר: <b>${esc(fbUser.email)}</b><br>המשימות מסתנכרנות אוטומטית בין כל המכשירים שבהם תתחבר עם חשבון זה.</p>
+      <button class="btn ghost" onclick="doLogout()">🚪 התנתקות</button>`
+    :(CLOUD
+      ?`<p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">אינך מחובר — הנתונים נשמרים מקומית בלבד.</p><button class="btn" onclick="showLogin()">🔑 התחברות עם Google</button>`
+      :`<p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">סנכרון הענן עדיין לא הופעל. יש להדביק את פרטי ה-Firebase בקובץ לפי ההוראות ב-README, ואז המשימות יסתנכרנו בין כל המכשירים.</p>`);
+  return `<div class="pagehead"><h1>⚙️ הגדרות</h1></div>
+  <div class="grid">
+  <div class="card"><b>☁️ חשבון וסנכרון</b>${acc}</div>
+  <div class="card"><b>לאן עוברת משימה שבוצעה?</b>
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+    <label style="display:flex;gap:8px;align-items:center;font-size:14.5px;color:var(--ink)"><input type="radio" name="dt" style="width:18px;height:18px" ${S.settings.doneTarget==="archive"?"checked":""} onchange="S.settings.doneTarget='archive';save()"> 🗄️ לארכיון (מומלץ — שומר היסטוריה והתקדמות)</label>
+    <label style="display:flex;gap:8px;align-items:center;font-size:14.5px;color:var(--ink)"><input type="radio" name="dt" style="width:18px;height:18px" ${S.settings.doneTarget==="trash"?"checked":""} onchange="S.settings.doneTarget='trash';save()"> 🗑️ לפח האשפה</label></div></div>
+  <div class="card"><b>התראות תזכורת</b>
+    <p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">התזכורות מוצגות כהתראת דפדפן כשעמוד הלוח פתוח (גם ברקע). אשר הרשאה:</p>
+    <button class="btn ghost" onclick="askNotifPermission(true)">🔔 אפשר התראות</button></div>
+  <div class="card"><b>גיבוי והעברה בין מכשירים</b>
+    <p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">הנתונים נשמרים בדפדפן של מכשיר זה. ייצא קובץ גיבוי וייבא אותו במכשיר השני.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn ghost" onclick="exportJSON()">⬇️ ייצוא גיבוי</button>
+    <button class="btn ghost" onclick="document.getElementById('impfile').click()">⬆️ ייבוא גיבוי</button>
+    <input type="file" id="impfile" accept=".json" style="display:none" onchange="importJSON(this)"></div></div>
+  <div class="card"><b>איפוס</b>
+    <p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">מחיקת כל הנתונים וחזרה למצב התחלתי.</p>
+    <button class="btn danger" onclick="confirmModal('לאפס את כל הלוח? כל הנתונים יימחקו (כולל בענן).',()=>{localStorage.removeItem(DB_KEY);S=defaultState();if(docRef){pushCloud();setTimeout(()=>location.reload(),900);}else location.reload();})">אפס הכל</button></div>
+  </div>`;
+}
+function exportJSON(){
+  const a=document.createElement("a");
+  a.href="data:application/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(S,null,1));
+  a.download="dashboard-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();
+}
+function importJSON(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.categories||!d.tasks)throw 0;S=d;render();toast("הגיבוי נטען ✓");}catch(e){toast("קובץ לא תקין");}};
+  r.readAsText(f);
+}
+
+/* ================= sharing ================= */
+function shareText(cid,sid){
+  const c=cat(cid),s=sub(c,sid);
+  const list=sortForView(openTasks(cid,sid));
+  let txt=`📋 ${c.name} › ${s.name}\nמשימות פתוחות (${list.length}):\n`;
+  list.forEach((t,i)=>{txt+=`${i+1}. ${t.pinned?"📌 ":""}${t.title}${t.reminderAt?" ⏰"+fmtDT(t.reminderAt):""}\n`;});
+  return txt;
+}
+function shareWhatsApp(cid,sid){window.open("https://wa.me/?text="+encodeURIComponent(shareText(cid,sid)),"_blank");}
+function shareMail(cid,sid){
+  const c=cat(cid),s=sub(c,sid);
+  location.href="mailto:?subject="+encodeURIComponent(`רשימת משימות: ${c.name} - ${s.name}`)+"&body="+encodeURIComponent(shareText(cid,sid));
+}
+function shareLink(cid,sid){
+  const c=cat(cid),s=sub(c,sid);
+  const payload={c:c.name,s:s.name,col:s.color,t:sortForView(openTasks(cid,sid)).map(t=>({n:t.title,p:t.pinned?1:0,r:t.reminderAt||0}))};
+  const enc=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const url=location.origin+location.pathname+"#s="+enc;
+  (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(
+    ()=>toast("קישור לצפייה הועתק ✓ שלח אותו לכל אחד"),
+    ()=>prompt("העתק את הקישור:",url));
+}
+let sharedData=null;
+function vShared(){
+  const d=sharedData;if(!d)return vDashboard();
+  let h=`<div class="card share-ro"><div class="pagehead" style="margin-bottom:8px"><h1><span class="cdot" style="background:${d.col||'#2563eb'}"></span>${esc(d.c)} › ${esc(d.s)}</h1></div>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:10px">רשימה משותפת לצפייה (${d.t.length} משימות)</p><ul>`;
+  d.t.forEach((t,i)=>{h+=`<li>${i+1}. ${t.p?"📌 ":""}${esc(t.n)}${t.r?` <span class="chip due">⏰ ${fmtDT(t.r)}</span>`:""}</li>`;});
+  h+=`</ul><div style="margin-top:16px"><button class="btn ghost" onclick="location.hash='';sharedData=null;go({name:'dashboard'})">מעבר ללוח שלי</button></div></div>`;
+  return h;
+}
+
+/* ================= voice input (Web Speech API, Hebrew) ================= */
+let recog=null,recTarget=null,recBtn=null;
+function startMic(target,btn){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast("הקלטה קולית נתמכת בדפדפן Chrome / Safari עדכני");return;}
+  if(recog){recog.stop();return;}
+  recog=new SR();recog.lang="he-IL";recog.interimResults=true;recog.continuous=false;
+  recTarget=target;recBtn=btn;btn.classList.add("rec");btn.textContent="⏹";
+  let final="";
+  recog.onresult=e=>{let s="";for(const r of e.results){if(r.isFinal)final+=r[0].transcript;else s+=r[0].transcript;}recTarget.value=(final||s);};
+  recog.onerror=()=>toast("שגיאת הקלטה — בדוק הרשאת מיקרופון");
+  recog.onend=()=>{recBtn.classList.remove("rec");recBtn.textContent="🎤";recog=null;recTarget.focus();};
+  recog.start();toast("מקליט… דבר עכשיו 🎤");
+}
+
+/* ================= reminders ================= */
+function askNotifPermission(verbose){
+  if(!("Notification"in window)){verbose&&toast("הדפדפן לא תומך בהתראות");return;}
+  if(Notification.permission==="default")Notification.requestPermission().then(p=>verbose&&toast(p==="granted"?"התראות פעילות ✓":"ההרשאה נדחתה"));
+  else if(verbose)toast(Notification.permission==="granted"?"התראות כבר פעילות ✓":"ההתראות חסומות בהגדרות הדפדפן");
+}
+function checkReminders(){
+  const now=Date.now();let hit=false;
+  for(const t of S.tasks){
+    if(t.status==="open"&&t.reminderAt&&!t.reminded&&t.reminderAt<=now){
+      t.reminded=true;hit=true;
+      const c=cat(t.catId),s=sub(c,t.subId);
+      const body=`${c?.name||""} › ${s?.name||""}`;
+      if("Notification"in window&&Notification.permission==="granted"){
+        try{new Notification("⏰ תזכורת: "+t.title,{body,tag:t.id});}catch(e){}
+      }
+      toast("⏰ תזכורת: "+t.title);
+    }
+  }
+  if(hit){save();if(view.name==="sub"||view.name==="dashboard")render();}
+}
+setInterval(checkReminders,30000);
+
+/* ================= modal & toast ================= */
+function openModal(html){document.getElementById("modal").innerHTML=html;document.getElementById("modalwrap").classList.add("show");}
+function closeModal(){document.getElementById("modalwrap").classList.remove("show");}
+let confirmCb=null;
+function confirmModal(msg,cb){
+  confirmCb=cb;
+  openModal(`<h3>אישור</h3><p style="font-size:14.5px;margin-bottom:16px">${esc(msg)}</p>
+  <div style="display:flex;gap:10px"><button class="btn danger" onclick="confirmCb();confirmCb=null;closeModal()">כן, בצע</button>
+  <button class="btn ghost" onclick="closeModal()">ביטול</button></div>`);
+}
+let toastTimer=null,toastUndo=null;
+function toast(msg,undo){
+  const el=document.getElementById("toast");
+  toastUndo=undo||null;
+  el.innerHTML=esc(msg)+(undo?` <button onclick="toastUndo&&toastUndo();hideToast()">ביטול</button>`:"");
+  el.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undo?5000:2500);
+}
+function hideToast(){document.getElementById("toast").classList.remove("show");}
+
+/* ================= init ================= */
+let booted=false;
+function boot(){render();if(!booted){booted=true;checkReminders();}}
+load();
+(function(){
+  const m=location.hash.match(/#s=(.+)/);
+  if(m){try{sharedData=JSON.parse(decodeURIComponent(escape(atob(m[1]))));view={name:"shared"};}catch(e){}}
+})();
+if(view.name==="shared"){boot();}
+else if(CLOUD){render();initCloud();}
+else{boot();}
+
+</script>
+</body>
+</html>
